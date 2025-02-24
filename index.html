@@ -96,66 +96,70 @@
     </div>
 
     <script>
-        let voices = [];
+      let voices = [];
 
-        // 音声をロードして選択肢を作成
-        function loadVoices() {
-            voices = window.speechSynthesis.getVoices();
-            const voiceSelect = document.getElementById("voiceSelect");
+// 音声をロードして選択肢を作成
+function loadVoices() {
+    voices = window.speechSynthesis.getVoices();
+    const voiceSelect = document.getElementById("voiceSelect");
 
-            // 音声がロードされていない場合、ロードが完了するまで待機
-            if (voices.length === 0) {
-                setTimeout(loadVoices, 100); // 100ms後に再試行
-                return;
-            }
+    // 音声がロードされていない場合、ロードが完了するまで待機
+    if (voices.length === 0) {
+        setTimeout(loadVoices, 100); // 100ms後に再試行
+        return;
+    }
 
-            // すでに選択肢をリセット
-            voiceSelect.innerHTML = '';
+    // すでに選択肢をリセット
+    voiceSelect.innerHTML = '';
 
-            // 音声を選択肢に追加
-            voices.forEach(voice => {
-                const option = document.createElement("option");
-                option.textContent = voice.name;
-                option.value = voice.name;
-                voiceSelect.appendChild(option);
-            });
+    // 日本語対応の音声のみをフィルタリング
+    const japaneseVoices = voices.filter(voice => voice.lang.startsWith('ja'));
 
-            // デフォルトで最初の声を選択
-            if (voices.length > 0) {
-                voiceSelect.value = voices[0].name;
-            }
-        }
+    // 日本語対応の音声を選択肢に追加
+    japaneseVoices.forEach(voice => {
+        const option = document.createElement("option");
+        option.textContent = voice.name;
+        option.value = voice.name;
+        voiceSelect.appendChild(option);
+    });
 
-        // テキストを読み上げる
-        function speakText() {
-            const text = document.getElementById("text").value;
-            if (text === '') {
-                alert("テキストを入力してください");
-                return;
-            }
+    // デフォルトで最初の声を選択
+    if (japaneseVoices.length > 0) {
+        voiceSelect.value = japaneseVoices[0].name;
+    }
+}
 
-            const speech = new SpeechSynthesisUtterance(text);
-            
-            // 声の選択
-            const selectedVoiceName = document.getElementById("voiceSelect").value;
-            const selectedVoice = voices.find(voice => voice.name === selectedVoiceName);
-            speech.voice = selectedVoice;
+// テキストを読み上げる
+function speakText() {
+    const text = document.getElementById("text").value;
+    if (text === '') {
+        alert("テキストを入力してください");
+        return;
+    }
 
-            // 音声の設定
-            speech.lang = 'ja-JP';
-            speech.rate = 1; // 通常の速度
-            speech.volume = 1; // 最大音量
-            speech.pitch = 1.2; // 少し高いピッチ
+    const speech = new SpeechSynthesisUtterance(text);
+    
+    // 声の選択
+    const selectedVoiceName = document.getElementById("voiceSelect").value;
+    const selectedVoice = voices.find(voice => voice.name === selectedVoiceName);
+    speech.voice = selectedVoice;
 
-            // 音声を再生
-            window.speechSynthesis.speak(speech);
-        }
+    // 音声の設定
+    speech.lang = 'ja-JP';
+    speech.rate = 1; // 通常の速度
+    speech.volume = 1; // 最大音量
+    speech.pitch = 1.2; // 少し高いピッチ
 
-        // 音声がロードされた後に、音声のリストを設定
-        window.speechSynthesis.onvoiceschanged = loadVoices;
+    // 音声を再生
+    window.speechSynthesis.speak(speech);
+}
 
-        // 初期ロード時に音声リストをロード
-        loadVoices();
+// 音声がロードされた後に、音声のリストを設定
+window.speechSynthesis.onvoiceschanged = loadVoices;
+
+// 初期ロード時に音声リストをロード
+loadVoices();
+
     </script>
 </body>
 </html>
