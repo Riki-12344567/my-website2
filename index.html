@@ -1,85 +1,79 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音声読み上げ</title>
+    <title>音声選択＆テキスト読み上げ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        select, button, textarea {
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
 </head>
 <body>
-    <h2>テキスト読み上げ</h2>
-    <textarea id="text" placeholder="ここにテキストを入力"></textarea>
-    <br>
-    <select id="voiceSelect"></select>
-    <button onclick="speakText()">読み上げ</button>
+    <div class="container">
+        <h2>テキストを音声に変換</h2>
+        <textarea id="text" rows="4" placeholder="ここにテキストを入力"></textarea>
+        <select id="voiceSelect"></select>
+        <button onclick="speak()">読み上げ</button>
+    </div>
 
     <script>
         let voices = [];
-        let voicesLoaded = false;
-
-        function loadVoices(retry = 5) {
+        function loadVoices() {
             voices = window.speechSynthesis.getVoices();
             const voiceSelect = document.getElementById("voiceSelect");
-
-            if (voices.length === 0 && retry > 0) {
-                setTimeout(() => loadVoices(retry - 1), 500); // 500msごとに再試行
-                return;
-            }
-
-            voiceSelect.innerHTML = '';
-            const japaneseVoices = voices.filter(voice => voice.lang === 'ja-JP');
-
-            if (japaneseVoices.length === 0) {
-                const option = document.createElement("option");
-                option.textContent = "日本語対応の音声が見つかりません";
-                option.disabled = true;
-                voiceSelect.appendChild(option);
-                return;
-            }
-
+            voiceSelect.innerHTML = "";
+            const japaneseVoices = voices.filter(voice => voice.lang.startsWith("ja"));
             japaneseVoices.forEach(voice => {
-                const option = document.createElement("option");
+                let option = document.createElement("option");
                 option.textContent = voice.name;
                 option.value = voice.name;
                 voiceSelect.appendChild(option);
             });
-
+            
+            // "Kyoko" をデフォルトに設定（存在しない場合は最初の日本語音声）
             const kyokoVoice = japaneseVoices.find(voice => voice.name.includes("Kyoko"));
             if (kyokoVoice) {
                 voiceSelect.value = kyokoVoice.name;
-            } else {
+            } else if (japaneseVoices.length > 0) {
                 voiceSelect.value = japaneseVoices[0].name;
             }
-
-            voicesLoaded = true;
         }
-
-        function speakText() {
+        
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        
+        function speak() {
             const text = document.getElementById("text").value;
-            if (text === '') {
-                alert("テキストを入力してください");
-                return;
-            }
-
-            if (!voicesLoaded) {
-                alert("音声データの読み込みが完了していません。しばらくしてから再試行してください。");
-                return;
-            }
-
-            const speech = new SpeechSynthesisUtterance(text);
-            const selectedVoiceName = document.getElementById("voiceSelect").value;
-            const selectedVoice = voices.find(voice => voice.name === selectedVoiceName);
-            speech.voice = selectedVoice;
-            speech.lang = 'ja-JP';
-            speech.rate = 1;
-            speech.volume = 1;
-            speech.pitch = 1.2;
-
-            window.speechSynthesis.speak(speech);
+            const utterance = new SpeechSynthesisUtterance(text);
+            const selectedVoice = document.getElementById("voiceSelect").value;
+            utterance.voice = voices.find(voice => voice.name === selectedVoice);
+            window.speechSynthesis.speak(utterance);
         }
-
-        window.speechSynthesis.onvoiceschanged = loadVoices;
-        loadVoices();
     </script>
 </body>
 </html>
