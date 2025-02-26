@@ -42,48 +42,50 @@
 
     <script>
         let voices = [];
-        function loadVoices() {
-    setTimeout(() => {
-        voices = window.speechSynthesis.getVoices();
-        const voiceSelect = document.getElementById("voiceSelect");
-        voiceSelect.innerHTML = "";
 
-        const japaneseVoices = voices.filter(voice => voice.lang.startsWith("ja"));
-        if (japaneseVoices.length === 0) {
-            let option = document.createElement("option");
-            option.textContent = "日本語音声なし";
-            option.disabled = true;
-            voiceSelect.appendChild(option);
-            return;
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+            const voiceSelect = document.getElementById("voiceSelect");
+            voiceSelect.innerHTML = "";
+
+            const japaneseVoices = voices.filter(voice => voice.lang.startsWith("ja"));
+            if (japaneseVoices.length === 0) {
+                let option = document.createElement("option");
+                option.textContent = "日本語音声なし";
+                option.disabled = true;
+                voiceSelect.appendChild(option);
+                return;
+            }
+
+            japaneseVoices.forEach(voice => {
+                let option = document.createElement("option");
+                option.textContent = voice.name;
+                option.value = voice.name;
+                voiceSelect.appendChild(option);
+            });
+
+            // "Kyoko" をデフォルトに設定（なければ最初の日本語音声）
+            const kyokoVoice = japaneseVoices.find(voice => voice.name.includes("Kyoko"));
+            voiceSelect.value = kyokoVoice ? kyokoVoice.name : japaneseVoices[0].name;
         }
 
-        japaneseVoices.forEach(voice => {
-            let option = document.createElement("option");
-            option.textContent = voice.name;
-            option.value = voice.name;
-            voiceSelect.appendChild(option);
-        });
-
-        // "Kyoko" をデフォルトに設定（なければ最初の日本語音声）
-        const kyokoVoice = japaneseVoices.find(voice => voice.name.includes("Kyoko"));
-        voiceSelect.value = kyokoVoice ? kyokoVoice.name : japaneseVoices[0].name;
-    }, 500);
-}
-
-            
-            // "Kyoko" をデフォルトに設定（存在しない場合は最初の日本語音声）
-            const kyokoVoice = japaneseVoices.find(voice => voice.name.includes("Kyoko"));
-            if (kyokoVoice) {
-                voiceSelect.value = kyokoVoice.name;
-            } else if (japaneseVoices.length > 0) {
-                voiceSelect.value = japaneseVoices[0].name;
+        // iPhone/Safari 対策: 音声リスト取得を待つ
+        function checkVoicesLoaded() {
+            if (window.speechSynthesis.getVoices().length === 0) {
+                setTimeout(checkVoicesLoaded, 500);
+            } else {
+                loadVoices();
             }
         }
-        
+
+        // 音声リストが変更されたときにリストを更新
         if (window.speechSynthesis.onvoiceschanged !== undefined) {
             window.speechSynthesis.onvoiceschanged = loadVoices;
         }
-        
+
+        // 初回ロード時に音声リストが取得できるまで待機
+        checkVoicesLoaded();
+
         function speak() {
             const text = document.getElementById("text").value;
             const utterance = new SpeechSynthesisUtterance(text);
