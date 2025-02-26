@@ -41,58 +41,67 @@
     </div>
 
     <script>
-        let voices = [];
+    let voices = [];
 
-        function loadVoices() {
-            voices = window.speechSynthesis.getVoices();
-            const voiceSelect = document.getElementById("voiceSelect");
-            voiceSelect.innerHTML = "";
+    function loadVoices() {
+        voices = window.speechSynthesis.getVoices();
+        const voiceSelect = document.getElementById("voiceSelect");
+        voiceSelect.innerHTML = "";
 
-            const japaneseVoices = voices.filter(voice => voice.lang.startsWith("ja"));
-            if (japaneseVoices.length === 0) {
-                let option = document.createElement("option");
-                option.textContent = "日本語音声なし";
-                option.disabled = true;
-                voiceSelect.appendChild(option);
-                return;
-            }
-
-            japaneseVoices.forEach(voice => {
-                let option = document.createElement("option");
-                option.textContent = voice.name;
-                option.value = voice.name;
-                voiceSelect.appendChild(option);
-            });
-
-            // "Kyoko" をデフォルトに設定（なければ最初の日本語音声）
-            const kyokoVoice = japaneseVoices.find(voice => voice.name.includes("Kyoko"));
-            voiceSelect.value = kyokoVoice ? kyokoVoice.name : japaneseVoices[0].name;
+        const japaneseVoices = voices.filter(voice => voice.lang.startsWith("ja"));
+        if (japaneseVoices.length === 0) {
+            let option = document.createElement("option");
+            option.textContent = "日本語音声なし";
+            option.disabled = true;
+            voiceSelect.appendChild(option);
+            return;
         }
 
-        // iPhone/Safari 対策: 音声リスト取得を待つ
-        function checkVoicesLoaded() {
-            if (window.speechSynthesis.getVoices().length === 0) {
-                setTimeout(checkVoicesLoaded, 500);
-            } else {
-                loadVoices();
-            }
-        }
+        japaneseVoices.forEach(voice => {
+            let option = document.createElement("option");
+            option.textContent = voice.name;
+            option.value = voice.name;
+            voiceSelect.appendChild(option);
+        });
 
-        // 音声リストが変更されたときにリストを更新
-        if (window.speechSynthesis.onvoiceschanged !== undefined) {
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-        }
+        // "Kyoko" をデフォルトに設定（なければ最初の日本語音声）
+        const kyokoVoice = japaneseVoices.find(voice => voice.name.includes("Kyoko"));
+        voiceSelect.value = kyokoVoice ? kyokoVoice.name : japaneseVoices[0].name;
+    }
 
-        // 初回ロード時に音声リストが取得できるまで待機
+    function checkVoicesLoaded() {
+        if (window.speechSynthesis.getVoices().length === 0) {
+            setTimeout(checkVoicesLoaded, 500);
+        } else {
+            loadVoices();
+        }
+    }
+
+    // ** iPhone Safari 対策: 何か適当な音をしゃべらせる **
+    function initializeVoices() {
+        const utterance = new SpeechSynthesisUtterance(" ");
+        utterance.volume = 0; // ミュート
+        window.speechSynthesis.speak(utterance);
+        setTimeout(loadVoices, 1000); // 1秒待って音声リストを更新
+    }
+
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        initializeVoices();
         checkVoicesLoaded();
+    });
 
-        function speak() {
-            const text = document.getElementById("text").value;
-            const utterance = new SpeechSynthesisUtterance(text);
-            const selectedVoice = document.getElementById("voiceSelect").value;
-            utterance.voice = voices.find(voice => voice.name === selectedVoice);
-            window.speechSynthesis.speak(utterance);
-        }
-    </script>
+    function speak() {
+        const text = document.getElementById("text").value;
+        const utterance = new SpeechSynthesisUtterance(text);
+        const selectedVoice = document.getElementById("voiceSelect").value;
+        utterance.voice = voices.find(voice => voice.name === selectedVoice);
+        window.speechSynthesis.speak(utterance);
+    }
+</script>
+
 </body>
 </html>
